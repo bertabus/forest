@@ -114,6 +114,25 @@ func ExpectString(t T, r *http.Response, callback func(content string)) {
 	callback(string(data))
 }
 
+// ExpectBinary reads the response body into a Go byte callback parameter.
+// Fail if the body could not be read or unmarshalled.
+func ExpectBinary(t T, r *http.Response, callback func(content []byte)) {
+	if r == nil {
+		t.Error(serrorf("ExpectString: no response available"))
+		return
+	}
+	data, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		t.Error(serrorf("ExpectString: unable to read response body:%v", err))
+		return
+	}
+	// put the body back for re-reads
+	r.Body = ioutil.NopCloser(bytes.NewReader(data))
+
+	callback(data)
+}
+
 // ExpectXMLDocument tries to unmarshal the response body into fields of the provided document (struct).
 // Fail if the body could not be read or unmarshalled.
 func ExpectXMLDocument(t T, r *http.Response, doc interface{}) {
